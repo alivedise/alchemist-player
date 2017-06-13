@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  html, body, #result {
+    width: 100%;
+    overflow-x: hidden;
+    padding: 0;
+    margin: 0;
+  }
+  #result {
+    position: relative;
+  }
+  #wording-wrapper {
+    position: absolute;
+    opacity: 0.5;
+    background-color: pink;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+  }
+  #name {
+    position: absolute;
+    top: -2rem;
+    left: 1rem;
+  }
+  #wording {
+    box-sizing: border-box;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1;
+  }
+  #sentence {
+    padding: 1rem;
+    color: white;
+  }
+  img {
+    max-width: 100%;
+  }
+</style>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+<script>
+var PREFIX = 'http://a.school-alchemist.com/SchoolAlchemist/res/';
+var VOICE_PREFIX = '/downloadfiles/adv/tuto_event_voice/';
+
+function playLineUntilStop(line, scenes) {
+  var params = line.split(',');
+  if (params.length === 1) {
+    return true;
+  }
+  var idparam = params[2];
+  var id = idparam.split('=')[1];
+  console.log(id);
+  switch (id) {
+    case '39':
+      var param = params[3].replace('param=', '');
+      $('#name').text(param);
+      break;
+    case '15':
+      var param = params[6].replace('msg=<size=32>', '');
+      $('#sentence').html(param);
+      break;
+    case '8':
+      break;
+    case '2':
+      var param = params[3].split(':')[0];
+      var src = scenes[param];
+      $('#img')[0].src = PREFIX + src;
+      break;
+    case '1':
+      var param = params[3];
+      var pairs = param.split(':');
+      scenes[pairs[0]] = pairs[1];
+      break;
+    case '33':
+      $('body').append('<audio id="bgm" loop src=' + PREFIX + params[3].split('=')[1] + ' />');
+      $('#bgm')[0].play();
+      break;
+    case '34':
+      var src = PREFIX + VOICE_PREFIX + params[3].split('=')[1];
+      $('#voice')[0].src = src;
+      $('#voice')[0].play();
+      break;
+    case '6':
+      if (line.indexOf('black') >= 0) {
+        $('#img')[0].src = PREFIX + params[3].split('=')[1];
+      }
+      break;
+  }
+  if (line.indexOf('=STOP') >= 0) {
+    return true;
+  }
+  return false;
+}
+
+$(document).ready(function(){
+  $('#result').hide();
+  var current = 0;
+  var data = [];
+  var scenes = {};
+  $('#parse').click(function() {
+    if (!$('#file').val().trim()) {
+      return;
+    }
+    $('#parse').hide();
+    $('#file').hide();
+    $('#result').show();
+    data = $('#file').val().split('\n');
+    scenes = {};
+    for (var i = current; ; i++) {
+      var line = data[i];
+      var stopped = playLineUntilStop(line, scenes);
+      if (stopped) {
+        current = i + 1;
+        break;
+      }
+    }
+  });
+  $('#result').click(function() {
+    for (var i = current; ; i++) {
+      var line = data[i];
+      var stopped = playLineUntilStop(line, scenes);
+      if (stopped) {
+        current = i + 1;
+        break;
+      }
+    }
+  });
+});
+</script>
+</head>
+<body>
+
+<textarea id="file" placeholder="Input scene text here">
+</textarea>
+<button id="parse">Play</button>
+<div id="result">
+  <img id="img" />
+  <div id="wording">
+    <div id="name"></div>
+    <div id="wording-wrapper"></div>
+    <div id="sentence"></div>
+  </div>
+  <audio id="voice" />
+</div>
+
+</body>
+</html>
